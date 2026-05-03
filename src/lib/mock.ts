@@ -25,7 +25,7 @@ export const DRIFT_EVENTS = [
   { id: "d3", detected_at: "2026-05-02T20:55:30Z", kind: "perf_drift", severity: "critical", details: "rolling 7d IC = -0.012 on tft-5m", action: "emergency retrain queued" },
 ];
 
-const seed = (n: number, fn: (i: number) => number) => Array.from({ length: n }, (_, i) => fn(i));
+const seed = <T>(n: number, fn: (i: number) => T): T[] => Array.from({ length: n }, (_, i) => fn(i));
 
 export function predictionSeries(symbol: string, horizon: Horizon) {
   const N = 96;
