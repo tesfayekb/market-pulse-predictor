@@ -52,14 +52,6 @@ function LoginPage() {
     }
   }
 
-  async function google() {
-    setErr(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
-    });
-    if (error) setErr(error.message);
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -96,16 +88,6 @@ function LoginPage() {
             </Button>
           </form>
         </Tabs>
-
-        <div className="my-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-border" />
-          <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">or</span>
-          <div className="h-px flex-1 bg-border" />
-        </div>
-
-        <Button variant="outline" className="w-full" onClick={google}>
-          Continue with Google
-        </Button>
       </div>
     </div>
   );
