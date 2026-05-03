@@ -145,14 +145,15 @@ function FeedHealthPage() {
         eyebrow="dashboard / feed_health"
         title="Feed health & drift"
         description="Real-time status of ingestion sources, latency, and drift events. Answers 'is the system actually working right now?'"
-      >
-        {isAdmin && (
-          <Button size="sm" variant="outline" onClick={seed} disabled={seeding} className="gap-2">
-            <Database className="h-3 w-3" />
-            {seeding ? "seeding..." : "seed test data"}
-          </Button>
-        )}
-      </PageHeader>
+        actions={
+          isAdmin ? (
+            <Button size="sm" variant="outline" onClick={seed} disabled={seeding} className="gap-2">
+              <Database className="h-3 w-3" />
+              {seeding ? "seeding..." : "seed test data"}
+            </Button>
+          ) : null
+        }
+      />
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard label="overall_health" value={`${overall}%`} hint={`${counts.green ?? 0}/${feeds.length} feeds green`} tone={Number(overall) > 90 ? "success" : "warning"} />
