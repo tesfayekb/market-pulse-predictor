@@ -96,16 +96,6 @@ function LoginPage() {
             </Button>
           </form>
         </Tabs>
-
-        <div className="my-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-border" />
-          <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">or</span>
-          <div className="h-px flex-1 bg-border" />
-        </div>
-
-        <Button variant="outline" className="w-full" onClick={google}>
-          Continue with Google
-        </Button>
       </div>
     </div>
   );
