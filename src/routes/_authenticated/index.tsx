@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { FEEDS, DRIFT_EVENTS } from "@/lib/mock";
 import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [{ title: "Feed Health · MPS Admin" }, { name: "description", content: "Live status of ingest feeds and drift events." }],
   }),

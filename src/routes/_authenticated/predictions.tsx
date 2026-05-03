@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SYMBOLS, HORIZONS, type Horizon, predictionSeries, recentPredictions } from "@/lib/mock";
 
-export const Route = createFileRoute("/predictions")({
+export const Route = createFileRoute("/_authenticated/predictions")({
   head: () => ({ meta: [{ title: "Predictions · MPS Admin" }] }),
   component: PredictionsPage,
 });
