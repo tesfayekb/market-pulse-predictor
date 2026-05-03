@@ -5,7 +5,7 @@ import { PageHeader, StatCard } from "@/components/page-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { rollingMetric, calibrationCurve, MODELS } from "@/lib/mock";
 
-export const Route = createFileRoute("/performance")({
+export const Route = createFileRoute("/_authenticated/performance")({
   head: () => ({ meta: [{ title: "Performance · MPS Admin" }] }),
   component: PerformancePage,
 });

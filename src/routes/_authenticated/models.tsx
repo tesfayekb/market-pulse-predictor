@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MODELS } from "@/lib/mock";
 
-export const Route = createFileRoute("/models")({
+export const Route = createFileRoute("/_authenticated/models")({
   head: () => ({ meta: [{ title: "Models · MPS Admin" }] }),
   component: ModelsPage,
 });

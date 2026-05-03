@@ -4,7 +4,7 @@ import { PageHeader, StatCard } from "@/components/page-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { COSTS, costSeries } from "@/lib/mock";
 
-export const Route = createFileRoute("/cost")({
+export const Route = createFileRoute("/_authenticated/cost")({
   head: () => ({ meta: [{ title: "Cost · MPS Admin" }] }),
   component: CostPage,
 });
