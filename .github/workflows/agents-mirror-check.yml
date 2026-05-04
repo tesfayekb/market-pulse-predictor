@@ -1,0 +1,68 @@
+name: AGENTS.md / CLAUDE.md mirror check
+
+# Per /AGENTS.md §8.1 and §8.5: CLAUDE.md is a content mirror of AGENTS.md
+# (Claude Code reads CLAUDE.md as its literal rules file; it cannot follow a
+# pointer). This workflow fails the build if the body of CLAUDE.md (everything
+# from the "# AGENTS.md" heading onward) diverges from AGENTS.md. The leading
+# blockquote header in CLAUDE.md is the only allowed difference.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  mirror:
+    name: AGENTS.md ↔ CLAUDE.md content mirror
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Both files exist
+        run: |
+          missing=0
+          test -f AGENTS.md || { echo "ERROR: /AGENTS.md is missing."; missing=1; }
+          test -f CLAUDE.md || { echo "ERROR: /CLAUDE.md is missing (expected per AGENTS.md §8.1)."; missing=1; }
+          exit $missing
+
+      - name: CLAUDE.md mirror header is present
+        run: |
+          if ! head -1 CLAUDE.md | grep -q "^> This file is a mirror of AGENTS.md"; then
+            echo "ERROR: CLAUDE.md is missing the mirror header on line 1."
+            echo "Per /AGENTS.md §8.1, line 1 must start with:"
+            echo "    > This file is a mirror of AGENTS.md..."
+            echo ""
+            echo "Got:"
+            head -1 CLAUDE.md
+            exit 1
+          fi
+          echo "OK: mirror header present."
+
+      - name: CLAUDE.md body matches AGENTS.md
+        run: |
+          # Extract the body of CLAUDE.md starting at the canonical "# AGENTS.md"
+          # heading. Everything before that line is the mirror header and is
+          # allowed to differ. Everything from that line onward must match
+          # AGENTS.md byte-for-byte.
+          sed -n '/^# AGENTS\.md$/,$p' CLAUDE.md > /tmp/claude_body.md
+
+          if [ ! -s /tmp/claude_body.md ]; then
+            echo "ERROR: CLAUDE.md does not contain the '# AGENTS.md' heading."
+            echo "The mirror is malformed. Reconstruct CLAUDE.md per /AGENTS.md §8.1:"
+            echo "  1. Start with the four-line '> This file is a mirror...' header"
+            echo "  2. Add a blank line"
+            echo "  3. Append the full contents of AGENTS.md verbatim"
+            exit 1
+          fi
+
+          if ! diff -q /tmp/claude_body.md AGENTS.md > /dev/null; then
+            echo "ERROR: CLAUDE.md body diverges from AGENTS.md."
+            echo "AGENTS.md is canonical; update both together."
+            echo ""
+            echo "Diff (CLAUDE.md body  vs  AGENTS.md):"
+            diff /tmp/claude_body.md AGENTS.md || true
+            exit 1
+          fi
+
+          echo "OK: CLAUDE.md body mirrors AGENTS.md exactly."
