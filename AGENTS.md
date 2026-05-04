@@ -152,7 +152,7 @@ These are extracted from PLAN.md §3. They are MUSTs. Violating any of them is a
 
 ### 4.11 Architectural lock for v1
 - v1 model architecture is **exactly three layers**: specialists → blender → LLM reasoner.
-- v1 data feeds are **exactly seven**: Polygon, Alpaca (fallback), NewsAPI, EDGAR, FRED, Reddit, StockTwits.
+- v1 data feeds are **exactly eight**: Polygon, Alpaca (fallback), NewsAPI, EDGAR, FRED, Reddit, StockTwits, SqueezeMetrics (free tier, supplementary).
 - Adding a layer, swapping a layer's algorithm, or adding a feed requires a phase-exit review and an explicit PLAN.md §4 revision.
 - AI agents MUST NOT introduce a new layer or feed inside a phase, even when the prompt's narrow scope appears to invite it ("a transformer ensemble would help here", "Twitter sentiment would be a small addition").
 
@@ -277,7 +277,7 @@ Claude Code reads `CLAUDE.md` at the repo root as its complete rules file. A one
   ```
   > This file is a mirror of AGENTS.md. The canonical source lives at /AGENTS.md. If this file diverges from AGENTS.md, AGENTS.md wins. Update both together (CI enforces the diff).
   ```
-  Then a CI step that fails if `diff CLAUDE.md AGENTS.md | grep -v "^>"` shows divergence.
+  Then a CI step that fails if `sed -n '/^# AGENTS\.md$/,$p' CLAUDE.md | diff - AGENTS.md` shows divergence. (The `diff CLAUDE.md AGENTS.md | grep -v "^>"` form does NOT work because diff prefixes CLAUDE-only lines with `<`, not `>`; the heading-anchored sed extract is what the actual CI workflow at .github/workflows/agents-mirror-check.yml uses.)
 
 A one-line pointer file is exactly what §5 (forbidden patterns) calls "mocking what should be live." Do not use it.
 
@@ -379,6 +379,7 @@ Like the pre-flight block, the `## Conflict` block converts ambiguity into a for
 |---|---|---|
 | 2026-05-03 | Initial creation | Round 4 design lock |
 | 2026-05-03 | Round 5 review applied: 11 changes including pointer rule fixes (CLAUDE.md mirror, Lovable UI fields, Cursor root-only), expanded pre-flight block (7 new fields), 4 new forbidden patterns, 2 new process gates, 3 new §4 invariants (LLM bounds, cost ceiling, architectural lock), session-boot ritual, disagreement protocol, glossary pointer | Round 5 reviewer corrections |
+| 2026-05-04 | §4.11 expanded to 8 feeds (added SqueezeMetrics free tier as supplementary source for dealer_gamma_estimate feature in LEARNING_LOOPS_SPEC.md C.4); §8.1 example expression corrected to match working CI mechanic | Phase 1 feature catalog requirement; reviewer-flagged §8.1 bug from Round 6 verification |
 
 ---
 
