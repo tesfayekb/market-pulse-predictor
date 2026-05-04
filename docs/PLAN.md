@@ -77,6 +77,22 @@ Accurate means *calibrated and useful*, not *always right*. A system that says "
 
 ---
 
+## 2.5 Miss-handling and promotion gate
+
+If 30-day out-of-sample metrics fall below the partial-success bar in §2, follow the diagnostic decision tree in `docs/ACCURACY_PLAYBOOK.md`. Do not change models, features, horizons, or targets ad-hoc. The playbook orders the diagnoses by likelihood and cost; respect that ordering.
+
+**Pre-promotion gate checklist.** Before any model status transition (`shadow → candidate` or `candidate → production`), the corresponding `model_registry` row MUST reference all five of:
+
+1. Walk-forward backtest results (anchored AND rolling)
+2. Calibration plot across deciles
+3. Per-symbol × per-horizon IC and Brier breakdown
+4. Feature importance dump
+5. Drift-event log clean for the training window
+
+Missing any of these blocks the transition. Enforced in code at promotion time. The transition itself is admin-approved via the dashboard. AI agents do not perform promotions autonomously.
+
+---
+
 ## 3. The contracts — invariants every part of the system must honor
 
 These are non-negotiable. Both this repo and the Python ingestion repo must enforce them. The invariants are duplicated in `docs/SCHEMA_CONTRACT.md` (a one-page summary) for cross-repo reference.
@@ -241,6 +257,8 @@ DASHBOARD                                   MONITORING (external)
 **Why this architecture:** stacking ensembles consistently outperform single models on financial prediction in published research and in practice. The regime-aware blender is what makes the system *adaptive* — when the market regime shifts, the blender's weights shift, and it does so without re-training the underlying specialists. The LLM layer adds context-aware nuance that pure ML models miss without giving up the deterministic core.
 
 **What we deliberately do NOT include in v1:** TFT, N-BEATS, Transformer architectures. These earn their slot in Phase 2 only if XGBoost + LSTM + linear cannot reach the success criteria. CPU inference at minute cadence on Railway cannot afford TFT/N-BEATS for 18 symbols × 5 horizons.
+
+**Regime classifier sub-spec.** The regime-aware blender depends on a regime classifier whose specification (state count, feature inputs, smoothing rule, sample-size guarantees, transition lockout, cold-start behavior) is captured in `docs/LEARNING_LOOPS_SPEC.md` Appendix A. Binding from Phase 1 Week 1 onward; until that document is written, the blender is implemented with placeholder regime labels and no regime-conditional weighting.
 
 ### 4.4 LLM safety guardrails
 
@@ -837,6 +855,8 @@ After every prediction is scored, the blender's internal state updates the rolli
 **Trigger:** every scoring event.
 **Adjustment magnitude:** small per cycle, smoothed.
 
+→ Algorithm and parameters: see `docs/LEARNING_LOOPS_SPEC.md`.
+
 ### 6.2 Loop 2 — Daily fast retrain (24 hours)
 
 The fast specialists (XGBoost, linear) refit on the last N days of data plus a held-out validation slice. Hyperparameters are not searched here — only weights update. Walk-forward discipline: train on `[T-N, T-1]`, validate on `[T-1, T]`, never peek.
@@ -844,12 +864,16 @@ The fast specialists (XGBoost, linear) refit on the last N days of data plus a h
 **Trigger:** scheduled, 03:00 UTC.
 **Output:** new model versions in `model_registry`, status='shadow' until promoted.
 
+→ Algorithm and parameters: see `docs/LEARNING_LOOPS_SPEC.md`.
+
 ### 6.3 Loop 3 — Weekly full retrain (7 days)
 
 All specialists refit with hyperparameter search. The blender re-fits its regime-aware weighting model. Anchored vs rolling walk-forward both run; their divergence is a regime-shift signal.
 
 **Trigger:** scheduled, Sunday 04:00 UTC.
 **Output:** candidate models in `model_registry`. Promotion to production requires `model_performance_per_symbol_horizon` to show non-degradation vs incumbent.
+
+→ Algorithm and parameters: see `docs/LEARNING_LOOPS_SPEC.md`.
 
 ### 6.4 Loop 4 — Drift-triggered emergency response (sub-day)
 
@@ -866,6 +890,8 @@ On critical drift:
 4. Predictions continue but `feed_health` degraded by drift severity.
 
 **Table involved:** `drift_events` (existing), `model_decisions` (new), `ensemble_weights` (new with reason='emergency_revert').
+
+→ Algorithm and parameters: see `docs/LEARNING_LOOPS_SPEC.md`.
 
 ### 6.5 Auto-correction is bounded
 
