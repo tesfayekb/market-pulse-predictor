@@ -1019,6 +1019,8 @@ Where `target_emission_time` is the scheduled emission slot (every 60s during re
 |---|---|---|
 | Supabase Pro (new org, MPS only) | $25 | Plus compute add-ons ~$5-10 |
 | Polygon Stocks Advanced | $199 | Real-time + L2 + history for SPX complex |
+| Polygon Indices Starter | $49 | I:VIX, I:VIX9D, I:SPX (15-min delayed); regime classifier term-structure feature |
+| Polygon Futures | $199 | ES, NQ futures (real-time); futures_basis feature in LEARNING_LOOPS_SPEC.md C.1 |
 | NewsAPI | (existing) | Already in user's stack |
 | Railway | $40 | Workers + scheduled jobs |
 | Modal | $30 | ~10 GPU-hr/wk during weekly retrain |
@@ -1028,7 +1030,7 @@ Where `target_emission_time` is the scheduled emission slot (every 60s during re
 | Healthchecks.io | $0 | Free tier sufficient |
 | Resend / Cloudflare Worker | $0 | Free tiers |
 | Domain + SSL | $2 | |
-| **Total** | **$401-461** | Within $500 ceiling |
+| **Total** | **$649-709** | Within $700 ceiling |
 
 ### 9.2 Cost adjustments vs earlier estimates
 
@@ -1045,6 +1047,8 @@ In rough order of risk:
 2. **Modal GPU minutes** — if weekly retrain expands to all Layer 1 specialists with HPO, GPU spend jumps.
 3. **Polygon overage** — if scope expands beyond SPX complex to single names, options, etc.
 4. **R2 egress** — if research queries pull large historical windows frequently.
+
+**2026-05-04 budget revision.** v1 cost ceiling raised from $500/mo to $700/mo per AGENTS.md §4.10 (cost ceiling) and §10 (file update protocol). Justification: Polygon Indices Starter ($49) is required for VIX and VIX9D delivery to the regime classifier per LEARNING_LOOPS_SPEC.md Appendix A.3; Polygon Futures ($199) is required for the futures_basis feature per LEARNING_LOOPS_SPEC.md C.1 and to fulfill PLAN.md §1 mission's inclusion of ES and NQ in the seed universe. Owner approval recorded by the project supervisor; Owner field elsewhere in PLAN.md remains TBD until Phase 0 launch per AGENTS.md §6.1.
 
 ---
 
