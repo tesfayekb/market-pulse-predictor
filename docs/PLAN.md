@@ -292,6 +292,17 @@ These tables are kept as-is, with only additive changes specified in §5.2:
 - `cost_ledger`
 - `model_performance_daily`
 
+**§5.1 schema-additive change for v2:** Add a `subject text` column to `drift_events`:
+
+```sql
+ALTER TABLE drift_events ADD COLUMN subject text;
+CREATE INDEX drift_events_kind_severity_subject_idx
+  ON drift_events (kind, severity, subject)
+  WHERE resolved_at IS NULL;
+```
+
+The `subject` column is the dedup key per LEARNING_LOOPS_SPEC.md §4.4 severity-aware dedup logic. For input-drift events, subject = feature name. For performance-drift events, subject = `'blender_global'`. For regime-change events, subject = `<from_regime>_to_<to_regime>`. The partial index on `(kind, severity, subject) WHERE resolved_at IS NULL` supports the dedup query pattern: "is there an unresolved event of this (kind, severity, subject)?". The text-typed `subject` column is queryable and indexable, replacing the v1 design that encoded subject in the `details` JSON-as-text column.
+
 ### 5.2 Restructure: `predictions` table
 
 **Reason for drop-recreate:** the partition key changes from `ts` to `generated_at`. This is irreversible without downtime. Doing it now while the table is empty is free; doing it later costs a maintenance window.
@@ -479,12 +490,15 @@ CREATE TABLE public.features_latest (
   data_grade text NOT NULL DEFAULT 'production'
     CHECK (data_grade IN ('production','shadow','backfill','synthetic')),
   updated_at timestamptz NOT NULL DEFAULT now(),
+  masked_at jsonb DEFAULT '{}'::jsonb,
   CONSTRAINT pit_invariant CHECK (max_upstream_available_at <= as_of),
   PRIMARY KEY (symbol, horizon)
 );
 
 ALTER TABLE public.features_latest ENABLE ROW LEVEL SECURITY;
 ```
+
+**`masked_at` semantics.** When Loop 4 (drift response per LEARNING_LOOPS_SPEC.md §4.2) masks a feature due to PSI > 0.5 distribution shift, the row's `masked_at` JSONB receives a key for that feature with the timestamp of masking. Inference applies per-family mask semantics (zero-coefficient for linear, mean-impute for XGBoost, forward-fill for LSTM) per LEARNING_LOOPS_SPEC.md §4.2.1. The mask reverts at the next Loop 3 weekly retrain that successfully re-includes the feature (PSI < 0.3 on new training data); the corresponding key is deleted from `masked_at` at that time. JSONB-keyed-by-feature is chosen over a scalar timestamptz column because a single (symbol, horizon) row may have multiple masked features simultaneously.
 
 Writers UPSERT on `(symbol, horizon)`. Inference jobs read by the same key. The `features` jsonb is the canonical hot input — it must be small enough to read cheaply from the dashboard for "what features fed this prediction" panels.
 
@@ -636,7 +650,10 @@ CREATE TABLE public.system_config (
       'system_trusted',
       'emission_enabled',
       'read_only_reason',
-      'shadow_mode_global'
+      'shadow_mode_global',
+      'emergency_retrain_requested',
+      'llm_max_prob_delta',
+      'llm_max_return_sigma_delta'
     )),
   value jsonb NOT NULL,
   updated_at timestamptz NOT NULL DEFAULT now(),
@@ -671,6 +688,8 @@ CREATE TRIGGER system_config_audit_trigger
   AFTER UPDATE ON public.system_config
   FOR EACH ROW EXECUTE FUNCTION public.system_config_audit();
 ```
+
+**Three new keys in v2 (per Round 7 review).** `emergency_retrain_requested` (jsonb-valued) is written by Loop 4 §4.2.2 in LEARNING_LOOPS_SPEC.md when an emergency Loop 3 refit is queued; the Modal worker polls this row hourly. `llm_max_prob_delta` and `llm_max_return_sigma_delta` are AGENTS.md §4.9 LLM influence bounds (default 0.05 and 0.5 respectively); they were already required by AGENTS.md §4.9 but were missing from the §5.12 CHECK in v1. The CHECK expansion preserves the gate against typo'd or unknown keys while admitting the three legitimately needed ones.
 
 Initial seed:
 ```sql
